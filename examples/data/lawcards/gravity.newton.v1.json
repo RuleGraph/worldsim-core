@@ -1,0 +1,90 @@
+{
+  "@context": {
+    "id": "@id",
+    "type": "@type",
+    "rg": "https://rulegraph.org/schema#",
+    "unit": "https://qudt.org/vocab/unit/",
+    "prov": "http://www.w3.org/ns/prov#"
+  },
+  "id": "rg:law/gravity.newton.v1",
+  "version": "1.0.0",
+  "type": "rg:LawCard",
+  "title": "Pairwise Newtonian Gravity",
+  "kind": [
+    "rg:PairwiseLaw"
+  ],
+  "equations": [
+    {
+      "machine": "F_vec = -G*m1*m2/r**3 * r_vec",
+      "tex": "\\vec F = -G\\,\\frac{m_1 m_2}{r^3}\\,\\vec r"
+    }
+  ],
+  "parameters": {
+    "G": {
+      "value": 6.6743e-11,
+      "unit": "unit:M3-PER-KG-SEC2",
+      "sigma": 1.5e-15
+    }
+  },
+  "validity": {
+    "regimes": {
+      "beta": {
+        "desc": "v/c",
+        "max": 0.1
+      }
+    },
+    "assumptions": [
+      "Point masses",
+      "Weak field",
+      "No radiation reaction"
+    ]
+  },
+  "invariants": {
+    "conserves": [
+      "Energy",
+      "LinearMomentum",
+      "AngularMomentum"
+    ],
+    "driftBudget": {
+      "Energy": {
+        "rel": 1e-5
+      },
+      "LinearMomentum": {
+        "rel": 1e-6
+      },
+      "AngularMomentum": {
+        "rel": 1e-6
+      }
+    }
+  },
+  "stabilityModel": {
+    "cflHint": 0.25,
+    "dtMaxRuleMachine": "dt < 0.25*sqrt(r**3/(G*(m1+m2)))",
+    "dtMaxRuleTex": "\\Delta t < 0.25\\sqrt{\\frac{r^3}{G(m_1+m_2)}}"
+  },
+  "testVectors": [
+    {
+      "name": "Earth-Sun period",
+      "inputs": {
+        "m1": 5.972e24,
+        "m2": 1.9885e30,
+        "r": 1.4959787e11,
+        "v": 29780
+      },
+      "expected": {
+        "period": {
+          "value": 365.25,
+          "unit": "unit:D"
+        },
+        "tolerance": {
+          "rel": 1e-3
+        }
+      }
+    }
+  ],
+  "provenance": {
+    "prov:wasAttributedTo": "RuleGraph",
+    "prov:generatedAtTime": "2025-08-24T12:05:00Z"
+  },
+  "sha256": "67ba3623fef8a139dc9f2cef76d34a107ee22b418df135a4212ff5c212a07180"
+}

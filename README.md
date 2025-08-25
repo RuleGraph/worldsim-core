@@ -1,2 +1,69 @@
-# worldsim-core
-Purpose: Load/validate worlds, resolve LawCards, run, audit invariants, write lockfiles.
+# worldsim-core (v0)
+
+Minimal, dependency-light kernel for declarative simulation with LawCards. Implements a tiny N-body (Newtonian) demo, validation, card resolution with sha256 verification, invariant auditing, and a CI-friendly smoke test.
+
+## Installation
+
+To set up the project, follow these steps:
+
+1. Create and activate a virtual environment:
+   ```
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+
+2. Install the project in editable mode along with development dependencies:
+   ```
+   pip install -e .[dev]
+   ```
+
+## Usage
+
+To run the example two-body simulation, execute the following command:
+
+```
+python examples/run_two_body.py
+```
+
+This will simulate the gravitational interaction between two bodies (e.g., the Earth and the Sun) over a specified duration.
+
+## Directory Structure
+
+The project is organized as follows:
+
+```
+worldsim-core/
+├── pyproject.toml          # Project configuration and dependencies
+├── src/                    # Source code for the worldsim_core package
+│   └── worldsim_core/
+│       ├── __init__.py     # Package initialization
+│       ├── models.py       # Data models using Pydantic
+│       ├── resolver.py     # Functions for resolving LawCard references
+│       ├── validate.py     # Validation functions for World and LawCard
+│       ├── invariants.py   # Functions for calculating physical invariants
+│       ├── simulate.py     # Simulation logic and RunResult class
+│       ├── provenance.py    # Writing provenance data to lockfile
+│       └── solvers/
+│           ├── __init__.py # Solvers package initialization
+│           └── verlet.py   # VerletNBodySolver implementation
+├── examples/               # Example scripts and data
+│   ├── run_two_body.py     # Example script for running a two-body simulation
+│   └── data/
+│       ├── lawcards/       # JSON representations of LawCards
+│       │   ├── gravity.newton.v1.json
+│       │   └── gravity.newton.v1.badhash.json
+│       └── worlds/         # JSON definitions of demo worlds
+│           └── two-body.demo.json
+└── tests/                  # Unit tests for the package
+    ├── test_units.py       # Unit tests for worldsim_core functionality
+    ├── test_resolver_hash.py # Tests for verifying LawCard SHA256 hashes
+    └── test_smoke_drift.py # Tests for energy drift in simulations
+```
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
+
+## License
+
+This project is licensed under the MIT License. See the LICENSE file for details.

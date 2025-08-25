@@ -1,0 +1,83 @@
+{
+  "@context": {
+    "id": "@id",
+    "type": "@type",
+    "rg": "https://rulegraph.org/schema#",
+    "unit": "https://qudt.org/vocab/unit/",
+    "prov": "http://www.w3.org/ns/prov#"
+  },
+  "id": "rg:world/solsystem.demo",
+  "type": "rg:World",
+  "version": "0.1.0",
+  "frames": [
+    {
+      "id": "rg:frame/inertial",
+      "type": "rg:InertialFrame",
+      "metric": "Euclidean",
+      "units": {
+        "length": "unit:M",
+        "time": "unit:S",
+        "mass": "unit:KG"
+      }
+    }
+  ],
+  "entities": [
+    {
+      "id": "rg:body/sun",
+      "type": "rg:Body",
+      "mass": {
+        "value": 1.9885e30,
+        "unit": "unit:KG"
+      },
+      "state": {
+        "frame": "rg:frame/inertial",
+        "t": "2025-08-24T00:00:00Z",
+        "position": {
+          "value": [0, 0, 0],
+          "unit": "unit:M"
+        },
+        "velocity": {
+          "value": [0, 0, 0],
+          "unit": "unit:M-PER-SEC"
+        }
+      }
+    },
+    {
+      "id": "rg:body/earth",
+      "type": "rg:Body",
+      "mass": {
+        "value": 5.972e24,
+        "unit": "unit:KG"
+      },
+      "state": {
+        "frame": "rg:frame/inertial",
+        "t": "2025-08-24T00:00:00Z",
+        "position": {
+          "value": [149597870000.0, 0, 0],
+          "unit": "unit:M"
+        },
+        "velocity": {
+          "value": [0, 29780, 0],
+          "unit": "unit:M-PER-SEC"
+        }
+      }
+    }
+  ],
+  "dynamics": [
+    {
+      "ref": "rg:law/gravity.newton.v1"
+    }
+  ],
+  "config": {
+    "startTime": "2025-08-24T00:00:00Z",
+    "steps": 100000,
+    "outputInterval": {
+      "value": 3600,
+      "unit": "unit:S"
+    }
+  },
+  "provenance": {
+    "prov:wasGeneratedBy": "rg:sim/run_0001",
+    "prov:generatedAtTime": "2025-08-24T12:00:00Z"
+  }
+}
