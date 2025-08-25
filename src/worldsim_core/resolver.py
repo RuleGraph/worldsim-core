@@ -1,38 +1,37 @@
 from __future__ import annotations
 from pathlib import Path
 from typing import Dict, List
-import json, hashlib
-
+import os, json, hashlib
 from .models import LawCard
 
-# Compute sha256 over canonical JSON with the 'sha256' field removed.
 def _canonical_sha256(payload: dict) -> str:
     to_hash = dict(payload)
     to_hash.pop("sha256", None)
     blob = json.dumps(to_hash, sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(blob).hexdigest()
 
-# Attempt to resolve known IRI ids to local example files
-_DEF_SEARCH_DIRS = [
-    Path(__file__).resolve().parents[3] / "examples" / "data" / "lawcards",
-]
+# Build default search dirs robustly:
+# 1) walk up a few levels and add <root>/examples/data/lawcards if it exists
+# 2) include extra dirs from RULEGRAPH_CARD_PATHS (os.pathsep-separated)
+_DEF_SEARCH_DIRS: List[Path] = []
+_here = Path(__file__).resolve()
+for n in range(2, 6):  # src/worldsim_core -> src -> repo root -> parent...
+    cand = _here.parents[n] / "examples" / "data" / "lawcards"
+    if cand.exists():
+        _DEF_SEARCH_DIRS.append(cand)
+
+_extra = os.getenv("RULEGRAPH_CARD_PATHS", "")
+for d in _extra.split(os.pathsep):
+    if d:
+        p = Path(d).expanduser().resolve()
+        if p.exists():
+            _DEF_SEARCH_DIRS.append(p)
 
 def _resolve_iri_to_path(ref: str) -> Path | None:
-    # Extendable search dirs via env var RULEGRAPH_CARD_PATHS (pathsep-separated)
-    import os
-    extra = os.getenv("RULEGRAPH_CARD_PATHS", "")
-    dirs = list(_DEF_SEARCH_DIRS)
-    for d in extra.split(os.pathsep):
-        if d:
-            dirs.append(Path(d))
-    # Simple heuristic: scan example lawcards for matching id
-    for d in dirs:
-        if not d.exists():
-            continue
+    for d in _DEF_SEARCH_DIRS:
         for p in d.glob("*.json"):
             try:
-                with open(p, "r", encoding="utf-8") as f:
-                    data = json.load(f)
+                data = json.load(open(p, "r", encoding="utf-8"))
                 if data.get("id") == ref:
                     return p
             except Exception:
@@ -40,8 +39,7 @@ def _resolve_iri_to_path(ref: str) -> Path | None:
     return None
 
 def _load_lawcard_from_path(path: Path, verify_hash: bool = True) -> LawCard:
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    data = json.load(open(path, "r", encoding="utf-8"))
     card = LawCard(**data)
     if verify_hash and card.sha256:
         actual = _canonical_sha256(data)
@@ -52,10 +50,6 @@ def _load_lawcard_from_path(path: Path, verify_hash: bool = True) -> LawCard:
     return card
 
 def resolve_cards(law_refs: List[str]) -> Dict[str, LawCard]:
-    """Resolve LawCards by local file path or by IRI id. Verify sha256 when present.
-
-    The returned dict is keyed by LawCard.id (not by ref).
-    """
     out: Dict[str, LawCard] = {}
     for ref in law_refs:
         p = Path(ref)
@@ -65,7 +59,7 @@ def resolve_cards(law_refs: List[str]) -> Dict[str, LawCard]:
             p2 = _resolve_iri_to_path(ref)
             if not p2:
                 raise FileNotFoundError(
-                    f"Cannot resolve LawCard ref '{ref}'. Provide a local path or add an example under examples/data/lawcards."
+                    f"Cannot resolve LawCard ref '{ref}'. Provide a local path or set RULEGRAPH_CARD_PATHS."
                 )
             card = _load_lawcard_from_path(p2)
         out[card.id] = card
