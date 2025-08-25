@@ -28,14 +28,28 @@ for d in _extra.split(os.pathsep):
             _DEF_SEARCH_DIRS.append(p)
 
 def _resolve_iri_to_path(ref: str) -> Path | None:
+    """
+    Scan known dirs for a LawCard whose `id` matches `ref`.
+    Ignore candidates whose sha256 does NOT verify (useful for test fixtures like *badhash*).
+    """
+    last_error = None
     for d in _DEF_SEARCH_DIRS:
-        for p in d.glob("*.json"):
+        if not d.exists():
+            continue
+        for p in sorted(d.glob("*.json")):
             try:
-                data = json.load(open(p, "r", encoding="utf-8"))
-                if data.get("id") == ref:
-                    return p
-            except Exception:
+                with open(p, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if data.get("id") != ref:
+                    continue
+                # Verify this candidate; skip if bad hash
+                _ = _load_lawcard_from_path(p, verify_hash=True)
+                return p
+            except Exception as e:
+                last_error = e
                 continue
+    if last_error:
+        raise last_error
     return None
 
 def _load_lawcard_from_path(path: Path, verify_hash: bool = True) -> LawCard:

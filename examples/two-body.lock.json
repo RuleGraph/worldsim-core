@@ -1,0 +1,17 @@
+{
+  "generatedAt": "2025-08-25T21:00:08.977077+00:00",
+  "dtSeconds": 120.0,
+  "steps": 21600,
+  "cards": {
+    "rg:law/gravity.newton.v1": {
+      "version": "1.0.0",
+      "sha256": "224ca15a04d2dbc88540c2d6a148a671e4253bda4eb36ca3f1062f6285413222",
+      "title": "Pairwise Newtonian Gravity"
+    }
+  },
+  "drifts": {
+    "Energy": 3.915525630811588e-15,
+    "LinearMomentum": 8.902619792282498e-15,
+    "AngularMomentum": 8.542551386191345e-15
+  }
+}
