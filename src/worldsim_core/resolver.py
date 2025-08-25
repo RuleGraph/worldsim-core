@@ -10,15 +10,31 @@ def _canonical_sha256(payload: dict) -> str:
     blob = json.dumps(to_hash, sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(blob).hexdigest()
 
-# Build default search dirs robustly:
-# 1) walk up a few levels and add <root>/examples/data/lawcards if it exists
-# 2) include extra dirs from RULEGRAPH_CARD_PATHS (os.pathsep-separated)
-_DEF_SEARCH_DIRS: List[Path] = []
-_here = Path(__file__).resolve()
-for n in range(2, 6):  # src/worldsim_core -> src -> repo root -> parent...
-    cand = _here.parents[n] / "examples" / "data" / "lawcards"
-    if cand.exists():
-        _DEF_SEARCH_DIRS.append(cand)
+def _discover_default_dirs() -> list[Path]:
+    here = Path(__file__).resolve()
+    # Walk up and stop when we find a directory that contains examples/data/lawcards
+    for p in [here.parent, *here.parents]:
+        cand = p / "examples" / "data" / "lawcards"
+        if cand.exists():
+            return [cand]
+        # If pyproject.toml is present, it's likely the repo root
+        if (p / "pyproject.toml").exists():
+            cand2 = p / "examples" / "data" / "lawcards"
+            if cand2.exists():
+                return [cand2]
+    # Fallback to parents[2] heuristic
+    return [here.parents[2] / "examples" / "data" / "lawcards"]
+
+_DEF_SEARCH_DIRS = _discover_default_dirs()
+
+# Allow extra dirs via env var
+for _d in os.getenv("RULEGRAPH_CARD_PATHS", "").split(os.pathsep):
+    if _d:
+        _DEF_SEARCH_DIRS.append(Path(_d))
+
+# Optional debug
+if os.getenv("RULEGRAPH_DEBUG"):
+    print("Resolver search dirs:", [str(d) for d in _DEF_SEARCH_DIRS])
 
 _extra = os.getenv("RULEGRAPH_CARD_PATHS", "")
 for d in _extra.split(os.pathsep):

@@ -2,6 +2,7 @@ LICENSE
 README.md
 pyproject.toml
 src/worldsim_core/__init__.py
+src/worldsim_core/cli.py
 src/worldsim_core/invariants.py
 src/worldsim_core/models.py
 src/worldsim_core/provenance.py
@@ -11,10 +12,13 @@ src/worldsim_core/validate.py
 src/worldsim_core.egg-info/PKG-INFO
 src/worldsim_core.egg-info/SOURCES.txt
 src/worldsim_core.egg-info/dependency_links.txt
+src/worldsim_core.egg-info/entry_points.txt
 src/worldsim_core.egg-info/requires.txt
 src/worldsim_core.egg-info/top_level.txt
 src/worldsim_core/solvers/__init__.py
 src/worldsim_core/solvers/verlet.py
+tests/test_acceptance_slow.py
+tests/test_no_warnings.py
 tests/test_resolver_hash.py
 tests/test_smoke_drift.py
 tests/test_units.py

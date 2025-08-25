@@ -1,0 +1,2 @@
+[console_scripts]
+worldsim-run = worldsim_core.cli:main
