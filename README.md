@@ -128,38 +128,6 @@ pytest                 # runs fast tests
 pytest -m slow         # runs the slow acceptance test
 ```
 
-# Repository layout
-```bash
-worldsim-core/
-├─ pyproject.toml
-├─ src/worldsim_core/
-│  ├─ __init__.py
-│  ├─ cli.py
-│  ├─ models.py
-│  ├─ resolver.py
-│  ├─ validate.py
-│  ├─ invariants.py
-│  ├─ simulate.py
-│  ├─ provenance.py
-│  └─ solvers/
-│     ├─ __init__.py
-│     └─ verlet.py
-├─ examples/
-│  ├─ run_two_body.py
-│  └─ data/
-│     ├─ lawcards/
-│     │  ├─ gravity.newton.v1.json
-│     │  └─ gravity.newton.v1.badhash.json   # test fixture (intentionally wrong hash)
-│     └─ worlds/
-│        └─ two-body.demo.json
-└─ tests/
-   ├─ test_units.py
-   ├─ test_resolver_hash.py
-   ├─ test_smoke_drift.py
-   ├─ test_no_warnings.py
-   └─ test_acceptance_slow.py   # marked @slow
-   ```
-
    # Contributor 
 
    - Francis Bousquet
