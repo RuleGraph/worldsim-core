@@ -26,7 +26,9 @@ worldsim-run = "worldsim_core.cli:main"
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 addopts = "-q -m 'not slow' -p no:cacheprovider"
-markers = ["slow: long-running acceptance tests"]
+markers = [
+  "slow: long-running acceptance tests"
+]
 
 [project.urls]
 Homepage = "https://github.com/RuleGraph/worldsim-core"
