@@ -1,69 +1,165 @@
-# worldsim-core (v0)
+# worldsim-core
 
-Minimal, dependency-light kernel for declarative simulation with LawCards. Implements a tiny N-body (Newtonian) demo, validation, card resolution with sha256 verification, invariant auditing, and a CI-friendly smoke test.
+**RuleGraph’s minimal, dependency-light kernel for declarative simulation.**  
+Loads JSON-LD **Worlds**, resolves **LawCards** (rules as data) with sha256 verification, validates units/blocks, runs a tiny N-body **Velocity-Verlet** demo, audits **invariants**, and writes a reproducible **lockfile**.
 
-## Installation
+> Status: **alpha (v0.1.0)** — stable enough to try; API may evolve.
 
-To set up the project, follow these steps:
+---
 
-1. Create and activate a virtual environment:
-   ```
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
+## Features
 
-2. Install the project in editable mode along with development dependencies:
-   ```
-   pip install -e .[dev]
-   ```
+- **Rules as data (LawCards)** — resolve by IRI or file path, verify **sha256**.
+- **Validation** — required fields, units present, `validity` & `invariants` blocks.
+- **Integrator** — velocity-Verlet with loop **and** vectorized kernels (auto-selects with memory guard).
+- **Invariant audit** — Energy, LinearMomentum, AngularMomentum + relative drift.
+- **Provenance** — JSON **lockfile** with exact card digests and run metadata.
+- **CLI** — `worldsim-run` to execute any world JSON quickly.
+- **Tests** — fast smoke + slow 1-year acceptance (`@slow` marker).
 
-## Usage
+---
 
-To run the example two-body simulation, execute the following command:
+## Install
 
+```bash
+# create and activate a virtual env
+python -m venv .venv
+# mac/linux:
+source .venv/bin/activate
+# windows powershell:
+# .\.venv\Scripts\Activate.ps1
+
+# editable install with dev deps (pytest etc.)
+pip install -e ".[dev]"
 ```
-python examples/run_two_body.py
+
+Requirements: Python ≥ 3.9, NumPy ≥ 1.24, Pydantic 2.x.
+
+# Quickstart (CLI)
+```bash
+# run fast tests
+pytest
+
+# run the two-body demo (30 days @ 120 s)
+worldsim-run examples/data/worlds/two-body.demo.json --dt 120 --steps 21600
+# Example output:
+# Steps=21600 dt=120.0 drifts={'Energy': ~3.9e-15, 'LinearMomentum': ~8.9e-15, 'AngularMomentum': ~8.5e-15}
 ```
 
-This will simulate the gravitational interaction between two bodies (e.g., the Earth and the Sun) over a specified duration.
-
-## Directory Structure
-
-The project is organized as follows:
-
+# CLI usage
+```bash
+worldsim-run <world.json> [--dt <seconds>] [--steps <N>] [--lock <file>]
 ```
+
+# LawCard search paths
+
+The resolver looks in the repo’s examples/data/lawcards and any extra directories from:
+
+```bash
+RULEGRAPH_CARD_PATHS=/abs/path/to/cards[:/another/path]
+```
+
+Set RULEGRAPH_DEBUG=1 to print the directories being searched.
+
+# Quickstart (Python API)
+
+```bash
+from worldsim_core import simulate, resolve_cards, validate
+from worldsim_core.models import World
+from worldsim_core.provenance import write_lockfile
+import json
+
+# Load the example world JSON-LD
+with open("examples/data/worlds/two-body.demo.json", "r", encoding="utf-8") as f:
+    world = World(**json.load(f))
+
+# Configure a 30-day run at 120 s
+world.config = dict(world.config or {})
+world.config["dtSeconds"] = 120.0
+world.config["steps"] = int(30 * 86400 / world.config["dtSeconds"])
+
+# Resolve LawCard by IRI (or pass a file path)
+cards = resolve_cards([world.dynamics[0]["ref"]])
+
+# Validate world + card (units & blocks present)
+report = validate(world, cards)
+assert report.ok, report.issues
+
+# Simulate and write a lockfile
+run = simulate(world, cards)
+print(run.drifts)  # {"Energy": ..., "LinearMomentum": ..., "AngularMomentum": ...}
+write_lockfile(run, cards, "run.lock.json")
+```
+
+# Customizing the solver
+```bash
+from worldsim_core.simulate import SolverRegistry, simulate
+from worldsim_core.solvers.verlet import VerletNBodySolver
+
+reg = SolverRegistry()
+reg.register(
+    "rg:law/gravity.newton.v1",
+    VerletNBodySolver(
+        softening=0.0,
+        vectorized=True,           # allow O(N^2) vectorization
+        vectorize_threshold=64,    # switch to vectorized when N >= 64
+        max_vectorized_bytes=256_000_000,  # memory guard
+    ),
+)
+run = simulate(world, cards, registry=reg)
+```
+
+# Examples
+
+- World: examples/data/worlds/two-body.demo.json
+
+- LawCard: examples/data/lawcards/gravity.newton.v1.json
+
+Both are used by the CLI and tests.
+
+# Tests & Acceptance
+
+- Fast suite: unit presence, hash mismatch, smoke drift, no-warnings.
+
+- Slow acceptance (local, opt-in): 1 year @ 60 s → Energy drift < 1e-5.
+
+```bash
+pytest                 # runs fast tests
+pytest -m slow         # runs the slow acceptance test
+```
+
+# Repository layout
+```bash
 worldsim-core/
-├── pyproject.toml          # Project configuration and dependencies
-├── src/                    # Source code for the worldsim_core package
-│   └── worldsim_core/
-│       ├── __init__.py     # Package initialization
-│       ├── models.py       # Data models using Pydantic
-│       ├── resolver.py     # Functions for resolving LawCard references
-│       ├── validate.py     # Validation functions for World and LawCard
-│       ├── invariants.py   # Functions for calculating physical invariants
-│       ├── simulate.py     # Simulation logic and RunResult class
-│       ├── provenance.py    # Writing provenance data to lockfile
-│       └── solvers/
-│           ├── __init__.py # Solvers package initialization
-│           └── verlet.py   # VerletNBodySolver implementation
-├── examples/               # Example scripts and data
-│   ├── run_two_body.py     # Example script for running a two-body simulation
-│   └── data/
-│       ├── lawcards/       # JSON representations of LawCards
-│       │   ├── gravity.newton.v1.json
-│       │   └── gravity.newton.v1.badhash.json
-│       └── worlds/         # JSON definitions of demo worlds
-│           └── two-body.demo.json
-└── tests/                  # Unit tests for the package
-    ├── test_units.py       # Unit tests for worldsim_core functionality
-    ├── test_resolver_hash.py # Tests for verifying LawCard SHA256 hashes
-    └── test_smoke_drift.py # Tests for energy drift in simulations
-```
+├─ pyproject.toml
+├─ src/worldsim_core/
+│  ├─ __init__.py
+│  ├─ cli.py
+│  ├─ models.py
+│  ├─ resolver.py
+│  ├─ validate.py
+│  ├─ invariants.py
+│  ├─ simulate.py
+│  ├─ provenance.py
+│  └─ solvers/
+│     ├─ __init__.py
+│     └─ verlet.py
+├─ examples/
+│  ├─ run_two_body.py
+│  └─ data/
+│     ├─ lawcards/
+│     │  ├─ gravity.newton.v1.json
+│     │  └─ gravity.newton.v1.badhash.json   # test fixture (intentionally wrong hash)
+│     └─ worlds/
+│        └─ two-body.demo.json
+└─ tests/
+   ├─ test_units.py
+   ├─ test_resolver_hash.py
+   ├─ test_smoke_drift.py
+   ├─ test_no_warnings.py
+   └─ test_acceptance_slow.py   # marked @slow
+   ```
 
-## Contributing
+   # Contributor 
 
-Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
+   - Francis Bousquet
