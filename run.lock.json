@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2025-08-25T23:15:27.615413+00:00",
-  "dtSeconds": 12.0,
-  "steps": 24555,
+  "generatedAt": "2025-08-28T23:27:03.854750+00:00",
+  "dtSeconds": 120.0,
+  "steps": 21600,
   "cards": {
     "rg:law/gravity.newton.v1": {
       "version": "1.0.0",
@@ -10,8 +10,8 @@
     }
   },
   "drifts": {
-    "Energy": 4.350584034235098e-16,
-    "LinearMomentum": 9.496127778434665e-15,
-    "AngularMomentum": 3.635128249443126e-16
+    "Energy": 3.915525630811588e-15,
+    "LinearMomentum": 8.902619792282498e-15,
+    "AngularMomentum": 8.542551386191345e-15
   }
 }
