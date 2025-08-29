@@ -62,6 +62,14 @@ class VerletNBodySolver:
         estimated = 48 * (n ** 2)
         return estimated < self.max_vectorized_bytes
 
+    # NEW: expose accelerations so the integrator can add other laws
+    def accelerations(self, state: Dict[str, Any], lawcard: LawCard) -> np.ndarray:
+        r = state["r"]
+        m = state["m"]
+        G = lawcard.parameters["G"].value
+        eps2 = self.softening**2
+        return self._accels(G, m, r, eps2)
+
     # ---------- time step ----------
 
     @staticmethod
@@ -88,13 +96,20 @@ class VerletNBodySolver:
         return r_new, v_new
 
     def step(self, state: Dict[str, Any], lawcard: LawCard, dt_seconds: float) -> Dict[str, Any]:
-        r = state["r"]
-        v = state["v"]
-        m = state["m"]
+        r = state["r"]; v = state["v"]; m = state["m"]
         t = state.get("t", 0.0)
-        G = lawcard.parameters["G"].value
-        eps2 = self.softening**2
-
-        vectorized = self._should_vectorize(r.shape[0])
-        r_new, v_new = self._take_step(G, m, r, v, dt_seconds, eps2, vectorized)
+        # keep backward-compat step = pure gravity
+        a = self.accelerations(state, lawcard)
+        v_half = v + 0.5 * dt_seconds * a
+        r_new = r + dt_seconds * v_half
+        # recompute on updated positions
+        a_new = self.accelerations({"r": r_new, "m": m}, lawcard)
+        v_new = v_half + 0.5 * dt_seconds * a_new
         return {"t": t + dt_seconds, "r": r_new, "v": v_new, "m": m}
+
+    def _accels(self, G: float, m: np.ndarray, r: np.ndarray, eps2: float) -> np.ndarray:
+        n = r.shape[0]
+        if self._should_vectorize(n):
+            return self._accels_vectorized(G, m, r, eps2)
+        else:
+            return self._accels_loop(G, m, r, eps2)

@@ -1,0 +1,31 @@
+{
+  "@context": { "id": "@id", "type": "@type", "rg": "https://rulegraph.org/schema#", "unit": "https://qudt.org/vocab/unit/" },
+  "id": "rg:world/gravity_drag.demo",
+  "type": "rg:World",
+  "version": "0.2.0",
+  "frames": [
+    { "id": "rg:frame/inertial", "type": "rg:InertialFrame", "metric": "Euclidean",
+      "units": { "length": "unit:M", "time": "unit:S", "mass": "unit:KG" } }
+  ],
+  "entities": [
+    {
+      "id": "body1", "type": "rg:Body",
+      "mass": { "value": 1.0, "unit": "unit:KG" },
+      "state": { "frame": "rg:frame/inertial", "t": "2025-08-28T00:00:00Z",
+        "position": { "value": [0.0, 0.0, 0.0], "unit": "unit:M" },
+        "velocity": { "value": [0.0, 300.0, 0.0], "unit": "unit:M-PER-SEC" } }
+    },
+    {
+      "id": "body2", "type": "rg:Body",
+      "mass": { "value": 5.972e24, "unit": "unit:KG" },
+      "state": { "frame": "rg:frame/inertial", "t": "2025-08-28T00:00:00Z",
+        "position": { "value": [6.9e6, 0.0, 0.0], "unit": "unit:M" },
+        "velocity": { "value": [0.0, 0.0, 0.0], "unit": "unit:M-PER-SEC" } }
+    }
+  ],
+  "dynamics": [
+    { "ref": "rg:law/gravity.newton.v1", "selector": { "pairs": [["body1","body2"]] } },
+    { "ref": "rg:law/fluids.drag.linear.v1", "selector": { "bodies": ["body1"] }, "override": { "gamma": 0.02 } }
+  ],
+  "config": { "dtSeconds": 0.5, "steps": 20000 }
+}

@@ -67,7 +67,28 @@ class World(BaseModel):
     version: str
     frames: List["Frame"]
     entities: List["Body"]
-    dynamics: List[Dict[str, str]]  # [{"ref": LawCard IRI or path}]
+
+    # --- NEW: structured dynamics entries ---
+    class Selector(BaseModel):
+        bodies: Optional[List[str]] = None
+        pairs: Optional[List[List[str]]] = None
+        # Back-compat: allow dict-like access in legacy code/tests
+        def __getitem__(self, key: str):
+            return getattr(self, key)
+        def get(self, key: str, default=None):
+            return getattr(self, key, default)
+
+    class Dynamic(BaseModel):
+        ref: str
+        selector: Optional["World.Selector"] = None
+        override: Optional[Dict[str, Any]] = None
+        # Back-compat: allow dict-like access in legacy code/tests
+        def __getitem__(self, key: str):
+            return getattr(self, key)
+        def get(self, key: str, default=None):
+            return getattr(self, key, default)
+
+    dynamics: List["World.Dynamic"]  # [{"ref": "...", "selector": {...}, "override": {...}}]
     solvers: Optional[Dict[str, str]] = None
     config: Optional[Dict[str, Any]] = None
     provenance: Optional[Dict[str, Any]] = None

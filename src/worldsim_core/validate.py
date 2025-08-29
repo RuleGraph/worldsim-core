@@ -31,7 +31,7 @@ def validate(world: World, cards: Dict[str, LawCard]) -> ValidationReport:
             issues.append(ValidationIssue(path=f"{ent.id}.state.velocity.unit", message="Velocity unit required"))
 
     # LawCards must include validity and invariants
-    for law_id in [d.get("ref") for d in world.dynamics]:
+    for law_id in [d.ref for d in world.dynamics]:
         lc = cards.get(law_id) or next((c for c in cards.values() if c.id == law_id), None)
         if lc is None:
             issues.append(ValidationIssue(path=f"dynamics:{law_id}", message="LawCard not resolved"))
