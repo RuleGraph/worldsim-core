@@ -87,6 +87,7 @@ with open("examples/data/worlds/two-body.demo.json", "r", encoding="utf-8") as f
 world.config = dict(world.config or {})
 world.config["dtSeconds"] = 120.0
 world.config["steps"] = int(30 * 86400 / world.config["dtSeconds"])
+```
 
 # Set your LawCards index so the resolver can find cards
 ```bash
@@ -99,14 +100,11 @@ report = validate(world, cards)
 assert report.ok, report.issues
 
 # Simulate and write a lockfile
+```bash
 run = simulate(world, cards)
 print(run.drifts)  # {"Energy": ..., "LinearMomentum": ..., "AngularMomentum": ...}
 write_lockfile(run, cards, "run.lock.json")
-```
 
-
-
-```bash
 pytest                 # runs fast tests
 pytest -m slow         # runs the slow acceptance test
 ```
