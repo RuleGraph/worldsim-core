@@ -2,7 +2,7 @@
   "@context": {
     "id": "@id",
     "type": "@type",
-    "rg": "https://rulegraph.org/schema#",
+    "rg": "https://rulegraph.org/vocab#",
     "unit": "https://qudt.org/vocab/unit/",
     "prov": "http://www.w3.org/ns/prov#"
   },

@@ -1,5 +1,5 @@
 {
-  "@context": { "id": "@id", "type": "@type", "rg": "https://rulegraph.org/schema#", "unit": "https://qudt.org/vocab/unit/" },
+  "@context": { "id": "@id", "type": "@type", "rg": "https://rulegraph.org/vocab#", "unit": "https://qudt.org/vocab/unit/" },
   "id": "rg:world/gravity_drag.demo",
   "type": "rg:World",
   "version": "0.2.0",
