@@ -24,7 +24,7 @@
     }
   ],
   "dynamics": [
-    { "ref": "rg:law/gravity.newton.v1", "selector": { "pairs": [["body1","body2"]] } },
+    { "ref": "rg:law/physics.gravity.newton.v1", "selector": { "pairs": [["body1","body2"]] } },
     { "ref": "rg:law/fluids.drag.linear.v1", "selector": { "bodies": ["body1"] }, "override": { "gamma": 0.02 } }
   ],
   "config": { "dtSeconds": 0.5, "steps": 20000 }

@@ -31,7 +31,7 @@ class SolverRegistry:
         return self._by_law[law_id]
 
 DEFAULT_REGISTRY = SolverRegistry()
-DEFAULT_REGISTRY.register("rg:law/gravity.newton.v1", VerletNBodySolver())
+DEFAULT_REGISTRY.register("rg:law/physics.gravity.newton.v1", VerletNBodySolver())
 
 def _world_to_arrays(world: World):
     m = np.array([e.mass.value for e in world.entities], dtype=float)
@@ -65,7 +65,7 @@ def simulate(world: World, cards: Dict[str, LawCard], registry: Optional[SolverR
     def _dyn_ref(d: Any) -> str:
         return getattr(d, "ref") if not isinstance(d, dict) else d.get("ref")
 
-    grav_ref = next((_dyn_ref(d) for d in dyn if _dyn_ref(d) == "rg:law/gravity.newton.v1"), None)
+    grav_ref = next((_dyn_ref(d) for d in dyn if _dyn_ref(d) == "rg:law/physics.gravity.newton.v1"), None)
     law_ref = grav_ref or _dyn_ref(dyn[0])
     law = cards.get(law_ref) or next((c for c in cards.values() if c.id == law_ref), None)
     solver = registry.get(law.id)

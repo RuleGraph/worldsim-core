@@ -65,7 +65,7 @@
   ],
   "dynamics": [
     {
-      "ref": "rg:law/gravity.newton.v1"
+      "ref": "rg:law/physics.gravity.newton.v1"
     }
   ],
   "config": {

@@ -42,7 +42,7 @@ class Equation(BaseModel):
 
 # --- Update LawCard and World models ---
 class LawCard(BaseModel):
-    id: str  # e.g. rg:law/gravity.newton.v1
+    id: str  # e.g. rg:law/physics.gravity.newton.v1
     version: str
     # accept either legacy "gw:LawCard" or new "rg:LawCard"
     type: str = Field(pattern="^(gw|rg):LawCard$")
