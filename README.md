@@ -1,114 +1,185 @@
 # worldsim-core
 
-**RuleGraph’s minimal, dependency-light kernel for declarative simulation.**  
-Loads JSON-LD **Worlds**, resolves **LawCards** (rules as data) with sha256 verification, validates units/blocks, runs **Velocity-Verlet** demo, audits **invariants**, and writes a reproducible **lockfile**.
+**RuleGraph’s minimal, dependency-light kernel for running worlds from rules as data (LawCards).**
+It loads JSON(-LD) Worlds, resolves LawCards, validates units/blocks, runs a Velocity-Verlet stepper, audits invariants, and writes a reproducible lockfile.
 
-> Status: **alpha (v0.1.1)** — stable enough to try; API may evolve.
+Status: alpha (v0.1.x) — stable enough to try; APIs may evolve.
 
----
+What’s new (since 0.1.1)
 
+RG-AST v1.2 support — piecewise, relations/logicals (lt/le/gt/ge/eq/ne, and/or/not), elementary math (exp/log/sqrt/sin/cos/…).
 
-What’s new in v0.1.1
+LawCard v0.2 support — symbols, equations[*].astProfile, extensions (x-*) and stability/test blocks, plus dissipative flag handling.
 
-Composable dynamics: run gravity plus additional laws (e.g., linear/quadratic drag) in one world.
-Structured World.dynamics: entries now support:
-selector — apply a law to specific bodies or pairs
-override — per-world parameter overrides
-Dissipative aware: if any law is dissipative, conservative stop-gates are disabled and drifts are reported accordingly.
-Back-compat: legacy dict-style dynamics access still works (world.dynamics[0]["ref"]).
+Composable dynamics — multiple laws in one world (e.g., gravity + linear drag + springs).
 
-## Features
+Selectors — apply a law to specific bodies/pairs via structured selectors.
 
-- **Rules as data (LawCards)** — resolve by IRI or file path, verify **sha256**.
-- **Validation** — required fields, units present, `validity` & `invariants`.
-- **Integrator** — velocity-Verlet with loop **and** vectorized kernels (auto-selects with memory guard).
-- **Invariant audit** — Energy, LinearMomentum, AngularMomentum + relative drift.
-- **Provenance** — JSON **lockfile** with exact card digests and run metadata.
-- **CLI** — `worldsim-run` to execute any world JSON.
-- **Tests** — fast smoke + optional slow acceptance.
+Overrides — world-local parameter overrides per dynamic entry.
 
----
+Index-based card resolution — resolve rg:law/... via a local index.json (or file paths), with sha256 verification.
 
-## Install
+Lockfiles — exact card digests + run metadata for deterministic re-runs.
 
-```bash
-# create and activate a virtual env
+# Key concepts
+
+- LawCards — self-contained, signed JSON rules (equations as canonical AST, units, invariants, provenance).
+Schemas:
+
+    - AST: https://rulegraph.org/schema/rg-ast/v1.2/rg-ast-v1.2.schema.json
+    - LawCard: https://rulegraph.org/schema/lawcard/v0.2/lawcard-v0.2.schema.json
+
+- World — a minimal JSON describing entities (state + units) and a list of dynamics (which cards to apply to which subsets).
+
+- Lockfile — output JSON recording exact card digests and key run parameters.
+
+# Install
+```
+# from repo root
 python -m venv .venv
-# mac/linux:
-source .venv/bin/activate
-# windows powershell:
-# .\.venv\Scripts\Activate.ps1
-
-# editable install with dev deps (pytest etc.)
-pip install -e ".[dev]"
+. .venv/bin/activate  # (Windows: .venv\Scripts\activate)
+pip install -e .
 ```
 
-Requirements: Python ≥ 3.9, NumPy ≥ 1.24, Pydantic 2.x.
-
-# Quickstart (CLI)
-```bash
-# run fast tests
-pytest
-
-# run the two-body demo (30 days @ 120 s)
-worldsim-run examples/data/worlds/two-body.demo.json --dt 120 --steps 21600
-# Example output:
-# Steps=21600 dt=120.0 drifts={'Energy': ~3.9e-15, 'LinearMomentum': ~8.9e-15, 'AngularMomentum': ~8.5e-15}
+(Optional) point to your LawCard index:
+```
+export RULEGRAPH_CARD_PATHS=/absolute/path/to/lawcards/index.json
+# Windows PowerShell:
+# $Env:RULEGRAPH_CARD_PATHS="C:\path\to\lawcards\index.json"
 ```
 
-# CLI usage
-```bash
-worldsim-run <world.json> [--dt <seconds>] [--steps <N>] [--lock <file>]
+# Quickstart
+
+Run a built-in example world:
+```
+worldsim-run examples/data/worlds/two-body.demo.json --steps 21600 --dt 120
+# → prints invariant drifts and writes run.lock.json
 ```
 
-# LawCard search paths
-
-The resolver looks in the repo’s examples/data/lawcards and any extra directories from:
-
-```bash
-RULEGRAPH_CARD_PATHS=/abs/path/to/cards[:/another/path]
+Typical output:
+```
+Steps=21600 dt=120.0 drifts={'Energy': 3.9e-15, 'LinearMomentum': 8.9e-15, 'AngularMomentum': 8.5e-15} lock=run.lock.json
 ```
 
-Set RULEGRAPH_DEBUG=1 to print the directories being searched.
-
-# Quickstart (Python API)
-
-```bash
-from worldsim_core import simulate, resolve_cards, validate
-from worldsim_core.models import World
-from worldsim_core.provenance import write_lockfile
+**Programmatic use**
+```
+from pathlib import Path
 import json
+from worldsim_core.engine import run_world
+from worldsim_core.models import World
 
-# Load the example world JSON-LD
-with open("examples/data/worlds/two-body.demo.json", "r", encoding="utf-8") as f:
-    world = World(**json.load(f))
-
-# Configure a 30-day run at 120 s
-world.config = dict(world.config or {})
-world.config["dtSeconds"] = 120.0
-world.config["steps"] = int(30 * 86400 / world.config["dtSeconds"])
+world = World(**json.loads(Path("examples/data/worlds/two-body.demo.json").read_text()))
+result = run_world(world, steps=21600, dt=120.0)
+print(result.drifts)
+Path("run.lock.json").write_text(result.lock_json, encoding="utf-8")
 ```
 
-# Set your LawCards index so the resolver can find cards
-```bash
-# Windows PowerShell example – adjust to your lawcards repo path
-$env:RULEGRAPH_CARD_PATHS = "C:\path\to\RuleGraph\lawcards\index.json"
+# World schema (essentials)
+
+A world specifies entities and a list of dynamics:
+```
+{
+  "entities": [
+    {
+      "id": "body1",
+      "state": {
+        "position": {"value": [0, 0, 0], "unit": "unit:M"},
+        "velocity": {"value": [0, 29780, 0], "unit": "unit:M-PER-SEC"},
+        "mass":     {"value": 5.972e24, "unit": "unit:KG"}
+      }
+    },
+    { "id": "body2", "state": { /* ... */ } }
+  ],
+  "dynamics": [
+    {
+      "ref": "rg:law/physics.gravity.newton.v1",
+      "selector": { "pairs": [["body1","body2"]] }
+    },
+    {
+      "ref": "rg:law/physics.fluids.drag.linear.v1",
+      "selector": { "bodies": ["body1"] },
+      "override": { "alpha": 0.02 }
+    }
+  ],
+  "integrator": { "kind": "velocity-verlet" }
+}
 ```
 
-# Validate world + card (units & blocks present)
-report = validate(world, cards)
-assert report.ok, report.issues
+**Selectors**
 
-# Simulate and write a lockfile
-```bash
-run = simulate(world, cards)
-print(run.drifts)  # {"Energy": ..., "LinearMomentum": ..., "AngularMomentum": ...}
-write_lockfile(run, cards, "run.lock.json")
+- {"pairs": [[idA, idB], ...]} — apply a pairwise law to listed ordered pairs.
+- {"bodies": [id, ...]} — apply a single-body law to listed bodies.
 
-pytest                 # runs fast tests
-pytest -m slow         # runs the slow acceptance test
+**Overrides**
+
+override is a dict of parameter name → value, merged on top of the card’s parameters.
+
+# LawCard resolution
+
+Resolution order:
+
+1. IRI via index — the engine looks up ref in RULEGRAPH_CARD_PATHS (a JSON mapping of rg:law/... → file path or URL).
+2. Direct path — if ref looks like a file path, it’s loaded directly.
+
+All cards are sha256-verified (field sha256) post-canonicalization of their JSON.
+
+# Invariant audit & lockfile
+
+After each run the engine:
+
+- Computes relative drifts for declared invariants (e.g., Energy, Linear/Angular momentum).
+- Writes a lockfile with:
+    - world metadata (dt, steps),
+    - resolved cards (IRI + sha256),
+    - minimal run provenance.
+
+Use this for reproducibility and for training/analysis pipelines to associate exact rule versions.
+
+# CLI
+```
+worldsim-run <world.json> [--steps N] [--dt SEC] [--lock out.json]
 ```
 
-   # Contributor 
+- --steps number of integration steps
+- --dt timestep (seconds)
+- --lock output lockfile path (default: run.lock.json)
 
-   - Francis Bousquet
+# Schemas & validation
+
+- **AST** (used inside LawCards):
+https://rulegraph.org/schema/rg-ast/v1.2/rg-ast-v1.2.schema.json
+- **LawCard**:
+https://rulegraph.org/schema/lawcard/v0.2/lawcard-v0.2.schema.json
+- **World** (repo local, minimal): see examples/data/worlds/ and tests for shape.
+
+If you publish your own cards, use the LawCards repo tooling to canonicalize AST and compute sha256, then reference them here.
+
+# Examples
+
+- examples/data/worlds/two-body.demo.json — gravity only (two-body).
+- examples/data/worlds/gravity-drag.demo.json — gravity + linear drag.
+- (You can add springs, Coulomb, hybrid drag, etc., as more cards land.)
+
+# Roadmap (short version)
+
+- Semi-implicit/implicit integrators & adaptive dt.
+- Sparse selectors (patterns/predicates).
+- Richer audit hooks (per-dynamic energy budgets).
+- Streaming/online locking for long runs.
+
+# Contributing
+
+PRs welcome! Keep changes small and well-tested.
+
+- Fast tests: pytest -q -m "not slow"
+- Full examples: run via worldsim-run above.
+
+# License & author
+
+- LawCards carry their own licenses (see each card’s license field, most common : CC-BY-4.0). 
+- The worldsim-core v1 have been developped by GourouWeb (https://gourouweb.com) and gifted to us under Apache 2.0 license.
+
+**Pointers**
+
+- LawCards repo: https://github.com/RuleGraph/lawcards
+- Spec (schemas & docs): https://github.com/RuleGraph/spec
