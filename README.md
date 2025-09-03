@@ -3,23 +3,17 @@
 **RuleGraph’s minimal, dependency-light kernel for running worlds from rules as data (LawCards).**
 It loads JSON(-LD) Worlds, resolves LawCards, validates units/blocks, runs a Velocity-Verlet stepper, audits invariants, and writes a reproducible lockfile.
 
-Status: alpha (v0.1.x) — stable enough to try; APIs may evolve.
+**Status**: alpha (v0.1.x) — stable enough to try; APIs may evolve.
 
-What’s new (since 0.1.1)
+What’s new (since 0.1.0)
 
-RG-AST v1.2 support — piecewise, relations/logicals (lt/le/gt/ge/eq/ne, and/or/not), elementary math (exp/log/sqrt/sin/cos/…).
-
-LawCard v0.2 support — symbols, equations[*].astProfile, extensions (x-*) and stability/test blocks, plus dissipative flag handling.
-
-Composable dynamics — multiple laws in one world (e.g., gravity + linear drag + springs).
-
-Selectors — apply a law to specific bodies/pairs via structured selectors.
-
-Overrides — world-local parameter overrides per dynamic entry.
-
-Index-based card resolution — resolve rg:law/... via a local index.json (or file paths), with sha256 verification.
-
-Lockfiles — exact card digests + run metadata for deterministic re-runs.
+- **RG-AST v1.2 support** — piecewise, relations/logicals (lt/le/gt/ge/eq/ne, and/or/not), elementary math (exp/log/sqrt/sin/cos/…).
+- **LawCard v0.2 support** — symbols, equations[*].astProfile, extensions (x-*) and stability/test blocks, plus dissipative flag handling.
+- **Composable dynamics** — multiple laws in one world (e.g., gravity + linear drag + springs).
+- **Selectors** — apply a law to specific bodies/pairs via structured selectors.
+- **Overrides** — world-local parameter overrides per dynamic entry.
+- **Index-based card resolution** — resolve rg:law/... via a local index.json (or file paths), with sha256 verification.
+- **Lockfiles** — exact card digests + run metadata for deterministic re-runs.
 
 # Key concepts
 
