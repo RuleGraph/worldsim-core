@@ -127,7 +127,7 @@ After each run the engine:
     - resolved cards (IRI + sha256),
     - minimal run provenance.
 
-Use this for reproducibility and for training/analysis pipelines to associate exact rule versions.
+Used for reproducibility and for training/analysis pipelines to associate exact rule versions.
 
 # CLI
 ```
@@ -143,7 +143,7 @@ worldsim-run <world.json> [--steps N] [--dt SEC] [--lock out.json]
 - **AST** (used inside LawCards):
 https://rulegraph.org/schema/rg-ast/v1.2/rg-ast-v1.2.schema.json
 - **LawCard**:
-https://rulegraph.org/schema/lawcard/v0.2/lawcard-v0.2.schema.json
+https://rulegraph.org/schema/lawcard/v0.2.1/lawcard-v0.2.1.schema.json
 - **World** (repo local, minimal): see examples/data/worlds/ and tests for shape.
 
 If you publish your own cards, use the LawCards repo tooling to canonicalize AST and compute sha256, then reference them here.
